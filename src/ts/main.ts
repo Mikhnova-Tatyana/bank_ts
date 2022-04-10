@@ -50,7 +50,7 @@ interface INavigation {
   action: string;
 }
 
-type ISelect = any[];
+type ISelect = string[] | [string, ...boolean[]];
 
 interface IMoneyObject<T> {
   [key: string | symbol]: T
@@ -113,8 +113,8 @@ class Bank {
     const fetchPost = new FetchService<Currancy[]>();
     fetchPost
       .request("https://api.privatbank.ua/p24api/pubinfo?exchange&json&coursid=11")
-      .then((response) => {
-              let uahCourse = { ccy: 'UAH', base_ccy: 'UAH', buy: '1.00', sale: '1.00' };
+      .then((response: Currancy[]) => {
+              let uahCourse: Currancy = { ccy: 'UAH', base_ccy: 'UAH', buy: '1.00', sale: '1.00' };
               response.push(uahCourse);
               localStorage.setItem('currancyCourse', JSON.stringify(response));
             })
@@ -122,7 +122,7 @@ class Bank {
   }
 
   createButton(type: string, className: string, text: string): HTMLButtonElement {
-    let button = document.createElement('button');
+    let button: HTMLButtonElement = document.createElement('button');
     button.type = type;
     button.classList.add(className);
     button.innerText = text;
@@ -130,7 +130,7 @@ class Bank {
   }
 
   createInput(type: string, name: string, placeholder: string, value?: string): HTMLInputElement {
-    let input = document.createElement('input');
+    let input: HTMLInputElement = document.createElement('input');
     input.type = type;
     input.name = name;
     input.placeholder = placeholder;
@@ -139,46 +139,50 @@ class Bank {
   }
 
   createTitle(type: string, text: string, className: string): HTMLElement {
-    const title = document.createElement(type);
+    const title: HTMLElement = document.createElement(type);
     title.innerText = text;
     title.classList.add(className);
     return title;
   }
 
   createSelect(name: string, options: string[], values: ISelect): HTMLSelectElement {
-    let select = document.createElement('select');
+    let select: HTMLSelectElement = document.createElement('select');
     select.name = name;
-    options.forEach((option, index) => {
-      select.options[index] = new Option(option, values[index]);
+    options.forEach((option: string, index: number) => {
+      select.options[index] = new Option(option, (values[index] as string));
     });
     return select;
   }
 
   createClientList(): HTMLTableElement {
-    let table = document.createElement("table");
+    let table: HTMLTableElement = document.createElement("table");
     table.className = 'table';
-    for (let client of this.clients) {
-      let tr = document.createElement("tr");
-      for (let item in client) {
-        let th = document.createElement("th");
+    let client: Client;
+    for (client of this.clients) {
+      let tr: HTMLTableRowElement = document.createElement("tr");
+      let item: string;
+      for (item in client) {
+        let th: HTMLTableCellElement = document.createElement("th");
         th.innerHTML = item;
         if (item === 'debitAccounts' || item === 'creditAccounts') {
-          let data = document.createElement("td");
-          for (let property of client[item]) {
-            let br = document.createElement("br");
-            for (let [key, value] of Object.entries(property)) {
-              let th = document.createElement("th");
-              let td = document.createElement("td");
+          let data: HTMLTableCellElement = document.createElement("td");
+          let property: IDebetAccount | ICreditAccount;
+          for (property of client[item]) {
+            let br: HTMLBRElement = document.createElement("br");
+            let key: string, value: number | boolean | string;
+            for ([key, value] of Object.entries(property)) {
+              let th: HTMLTableCellElement = document.createElement("th");
+              let td: HTMLTableCellElement = document.createElement("td");
               th.innerHTML = key;
-              td.innerHTML = value;
+              td.innerHTML = value.toString();
               data.append(th, td);
             }
             data.append(br);
           }
           tr.append(th, data);
         } else {
-          let th = document.createElement("th");
-          let td = document.createElement("td");
+          let th: HTMLTableCellElement = document.createElement("th");
+          let td: HTMLTableCellElement = document.createElement("td");
           th.innerHTML = item;
           td.innerHTML = client[item as 'lastName' | 'firstName' | 'patronymic' |
             'identificationNumber' | 'isActiveClient' | 'registrationDate'] as string;
@@ -192,7 +196,7 @@ class Bank {
 
   createClientForm(clientData: Client | null | 0, className: string): HTMLFormElement {
     clientData = clientData || 0;
-    let form = document.createElement('form');
+    let form: HTMLFormElement = document.createElement('form');
     form.innerHTML = `
       <input type='text' placeholder = 'Введите фамилию' name = 'lastName' value=
         ${(clientData as Client).lastName || " "} >
@@ -203,7 +207,7 @@ class Bank {
       <input type='number' placeholder ='Введите ИНН' name = 'identificationNumber' value=
         ${(clientData as Client).identificationNumber || " "} >
     `;
-    let isActiveSelect = this.createSelect('isActiveClient',
+    let isActiveSelect: HTMLSelectElement = this.createSelect('isActiveClient',
       ['Выберите активность клиента', 'active', 'passive'],
       ['chose activity', true, false]);
     let buttonSubmit: HTMLButtonElement = this.createButton('button', 'btn', 'Отправить');
@@ -215,13 +219,13 @@ class Bank {
 
   onAddClient(event: MouseEvent): void {
     event.preventDefault();
-    let data = new FormData((event.target as HTMLFormElement).closest("form")!);
+    let data: FormData = new FormData((event.target as HTMLFormElement).closest("form")!);
     if ((event.target as HTMLFormElement).closest('form')!.classList.contains('update-client')) {
-      let currentClient: IClient = JSON.parse(localStorage.getItem('currentClient')!);
-      data.forEach((value, name) => {
+      let currentClient: Client = JSON.parse(localStorage.getItem('currentClient')!);
+      data.forEach((value: FormDataEntryValue, name: string) => {
         Object.assign(currentClient, { [name]: value });
       });
-      let index = Number(localStorage.getItem('currentClientIndex'));
+      let index: number = Number(localStorage.getItem('currentClientIndex'));
       this.clients[index] = currentClient;
       localStorage.setItem("clients", JSON.stringify(this.clients));
       this.editAction();
@@ -236,7 +240,7 @@ class Bank {
         identificationNumber: 0,
         isActiveClient: true,
       };
-      data.forEach((value, name) => {
+      data.forEach((value: FormDataEntryValue, name: string) => {
         Object.assign(сlientData, { [name]: value });
       });
       this.clients.push(сlientData);
@@ -246,10 +250,10 @@ class Bank {
   }
 
   createEditButtonGroup(): HTMLDivElement {
-    let buttonGroup = document.createElement("div");
-    let updateButton = this.createButton("button", "options", "Редактировать");
+    let buttonGroup: HTMLDivElement = document.createElement("div");
+    let updateButton: HTMLButtonElement = this.createButton("button", "options", "Редактировать");
     updateButton.addEventListener('click', this.onUpdateClient.bind(this));
-    let deleteButton = this.createButton("button", "options", "Удалить");
+    let deleteButton: HTMLButtonElement = this.createButton("button", "options", "Удалить");
     deleteButton.addEventListener('click', this.onDeleteClient.bind(this));
     buttonGroup.append(updateButton, deleteButton);
     buttonGroup.classList.add('button-group');
@@ -261,7 +265,7 @@ class Bank {
     if (this.root.querySelector(".update-client")) {
       this.root.querySelector(".update-client")!.remove();
     }
-    let currentClient = JSON.parse(localStorage.getItem('currentClient')!);
+    let currentClient: Client = JSON.parse(localStorage.getItem('currentClient')!);
     this.root.appendChild(this.createClientForm(currentClient, 'update-client'));
   }
 
@@ -274,10 +278,10 @@ class Bank {
   }
 
   createSearchClientForm(className: string): HTMLFormElement {
-    let form = document.createElement("form");
-    let identificationNumberInput = this.createInput('number',
+    let form: HTMLFormElement = document.createElement("form");
+    let identificationNumberInput: HTMLInputElement = this.createInput('number',
       'identificationNumber', 'Введите ИНН клиента');
-    let buttonSearchClient = this.createButton("button", "btn", "Найти");
+    let buttonSearchClient: HTMLButtonElement = this.createButton("button", "btn", "Найти");
     buttonSearchClient.addEventListener('click', this.onSearchClient.bind(this));
     buttonSearchClient.addEventListener('click', this.renderForm.bind(this));
     form.append(identificationNumberInput, buttonSearchClient);
@@ -320,7 +324,7 @@ class Bank {
       this.root.querySelector(".update-client")!.remove();
     }
     if (!currentClient) {
-      let message = this.createTitle('p', 'Клиент с данным ИНН не найден', 'message');
+      let message: HTMLElement = this.createTitle('p', 'Клиент с данным ИНН не найден', 'message');
       this.root.appendChild(message);
       event.stopImmediatePropagation();
     }
@@ -344,19 +348,20 @@ class Bank {
   }
 
   showClient(currentClient: Client): void {
-    let table = document.createElement("table");
+    let table: HTMLTableElement = document.createElement("table");
     table.className = 'table';
-    let tr = document.createElement("tr");
-    for (let item in currentClient) {
+    let tr: HTMLTableRowElement = document.createElement("tr");
+    let item: string;
+    for (item in currentClient) {
       if (item === 'creditAccounts' || item === 'debitAccounts') {
-        let th = document.createElement("th");
-        let td = document.createElement("td");
+        let th: HTMLTableCellElement = document.createElement("th");
+        let td: HTMLTableCellElement = document.createElement("td");
         th.innerHTML = item;
         td.innerHTML = String(currentClient[item].length);
         tr.append(th, td);
       } else {
-        let th = document.createElement("th");
-        let td = document.createElement("td");
+        let th: HTMLTableCellElement = document.createElement("th");
+        let td: HTMLTableCellElement = document.createElement("td");
         th.innerHTML = item;
         td.innerHTML = currentClient[item as 'lastName' | 'firstName' | 'patronymic' |
           'identificationNumber' | 'isActiveClient' | 'registrationDate'] as string;
@@ -368,10 +373,10 @@ class Bank {
   }
 
   createRadioInputGroup(name: string, values: string[]): HTMLDivElement {
-    let inputGroup = document.createElement("div");
-    values.forEach((value, index: number) => {
-      let temp = Date.now() + index;
-      let radioInput = document.createElement('input');
+    let inputGroup: HTMLDivElement = document.createElement("div");
+    values.forEach((value: string, index: number) => {
+      let temp: number = Date.now() + index;
+      let radioInput: HTMLInputElement = document.createElement('input');
       radioInput.type = 'radio';
       radioInput.name = name;
       radioInput.value = value;
@@ -396,25 +401,25 @@ class Bank {
         this.root.querySelector(".credit-account")!.remove();
       }
       if ((event.target as HTMLInputElement).value === 'Дебитовый счет') {
-        let debitAccount = this.createDebitAccountForm();
+        let debitAccount: HTMLFormElement = this.createDebitAccountForm();
         this.root.appendChild(debitAccount);
       } else if ((event.target as HTMLInputElement).value === 'Кредитовый счет') {
-        let creditAccount = this.createCreditAccountForm();
+        let creditAccount: HTMLFormElement = this.createCreditAccountForm();
         this.root.appendChild(creditAccount);
       }
     }
   }
 
   createDebitAccountForm(): HTMLFormElement {
-    let form = document.createElement("form");
-    let balance = this.createInput('number', 'balance', 'Введите сумму личных средств');
-    let isActiveSelect = this.createSelect("isActive",
+    let form: HTMLFormElement = document.createElement("form");
+    let balance: HTMLInputElement = this.createInput('number', 'balance', 'Введите сумму личных средств');
+    let isActiveSelect: HTMLSelectElement = this.createSelect("isActive",
       ['Выберите активность счета', 'active', 'passive'],
       ['chose activity', true, false]);
-    let currencyTypeSelect = this.createSelect("currencyType",
+    let currencyTypeSelect: HTMLSelectElement = this.createSelect("currencyType",
       ['Выберите валюту', 'UAH', 'USD', 'EUR'],
       ['chose currancy', 'UAH', 'USD', 'EUR']);
-    let buttonAddAccount = this.createButton("button", "btn", "Добавить счет");
+    let buttonAddAccount: HTMLButtonElement = this.createButton("button", "btn", "Добавить счет");
     buttonAddAccount.addEventListener("click", this.onAddDebitAccount.bind(this));
     form.classList.add("debit-account");
     form.append(balance, isActiveSelect,
@@ -433,14 +438,14 @@ class Bank {
       currencyType: 'UAH' 
     };
 
-    let data = new FormData((event.target as HTMLFormElement).closest("form")!);
-    data.forEach((value, name) => {
+    let data: FormData = new FormData((event.target as HTMLFormElement).closest("form")!);
+    data.forEach((value: FormDataEntryValue, name: string) => {
       Object.assign(debitData, { [name]: value });
     });
 
     let currentClient: Client = JSON.parse(localStorage.getItem('currentClient')!);
     currentClient.debitAccounts.push(debitData);
-    let index = Number(localStorage.getItem('currentClientIndex'));
+    let index: number = Number(localStorage.getItem('currentClientIndex'));
     this.clients[index] = currentClient;
     localStorage.setItem("clients", JSON.stringify(this.clients));
 
@@ -448,16 +453,16 @@ class Bank {
   }
 
   createCreditAccountForm(): HTMLFormElement {
-    let form = document.createElement("form");
-    let personalFunds = this.createInput('number', 'personalFunds', 'Введите сумму личных средств');
-    let limit = this.createInput('number', 'limit', 'Введите сумму кредитного лимита');
-    let isActiveSelect = this.createSelect("isActive",
+    let form: HTMLFormElement = document.createElement("form");
+    let personalFunds: HTMLInputElement = this.createInput('number', 'personalFunds', 'Введите сумму личных средств');
+    let limit: HTMLInputElement = this.createInput('number', 'limit', 'Введите сумму кредитного лимита');
+    let isActiveSelect: HTMLSelectElement = this.createSelect("isActive",
       ['Выберите активность счета', 'active', 'passive'],
       ['chose activity', true, false]);
-    let currencyTypeSelect = this.createSelect("currencyType",
+    let currencyTypeSelect: HTMLSelectElement = this.createSelect("currencyType",
       ['Выберите валюту', 'UAH', 'USD', 'EUR'],
       ['chose currancy', 'UAH', 'USD', 'EUR']);
-    let buttonAddAccount = this.createButton("button", "btn", "Добавить счет");
+    let buttonAddAccount: HTMLButtonElement = this.createButton("button", "btn", "Добавить счет");
     buttonAddAccount.addEventListener("click", this.onAddCreditAccount.bind(this));
     form.classList.add("credit-account");
     form.append(personalFunds, limit,
@@ -467,22 +472,26 @@ class Bank {
 
   onAddCreditAccount(event: MouseEvent): void {
     event.preventDefault();
-    let creditData = {
+    let creditData: ICreditAccount = {
       balance: Number((event.target as HTMLFormElement).closest("form")!.personalFunds.value) +
         Number((event.target as HTMLFormElement).closest("form")!.limit.value),
       activationDate: new Date().toLocaleDateString(),
       cardExpirationDate: new Date(new Date().
         setFullYear(new Date().getFullYear() + 5)).toLocaleDateString(),
+      personalFunds: 0,
+      limit: 0,
+      isActive: true,
+      currencyType: 'UAH'
     };
 
-    let data = new FormData((event.target as HTMLFormElement).closest("form")!);
-    data.forEach((value, name) => {
+    let data: FormData = new FormData((event.target as HTMLFormElement).closest("form")!);
+    data.forEach((value: FormDataEntryValue, name: string) => {
       Object.assign(creditData, { [name]: value });
     });
 
-    let currentClient = JSON.parse(localStorage.getItem('currentClient')!);
+    let currentClient: Client = JSON.parse(localStorage.getItem('currentClient')!);
     currentClient.creditAccounts.push(creditData);
-    let index = Number(localStorage.getItem('currentClientIndex'));
+    let index: number = Number(localStorage.getItem('currentClientIndex'));
     this.clients[index] = currentClient;
     localStorage.setItem("clients", JSON.stringify(this.clients));
 
@@ -491,9 +500,10 @@ class Bank {
 
   countMoneyAmount(currencyType: string): number {
     let moneyAmount: IMoneyObject<number> = {};
-    let client: IClient;
+    let client: Client;
     for (client of this.clients) {
-      for (let account of client.debitAccounts) {
+      let account: IDebetAccount | ICreditAccount;
+      for (account of client.debitAccounts) {
         if (account) {
           if (!moneyAmount[account.currencyType]) {
             moneyAmount[account.currencyType] = 0;
@@ -501,7 +511,7 @@ class Bank {
           moneyAmount[account.currencyType] += +account.balance;
         }
       }
-      for (let account of client.creditAccounts) {
+      for (account of client.creditAccounts) {
         if (account) {
           if (!moneyAmount[account.currencyType]) {
             moneyAmount[account.currencyType] = 0;
@@ -510,15 +520,17 @@ class Bank {
         }
       }
     }
-    let sumUah = 0;
-    let rate;
-    for (let currancy of JSON.parse(localStorage.currancyCourse)) {
-      for (let item in moneyAmount) {
+    let sumUah: number = 0;
+    let rate: number = 0;
+    let currancy: Currancy;
+    for (currancy of JSON.parse(localStorage.currancyCourse)) {
+      let item: string;
+      for (item in moneyAmount) {
           if (currancy.ccy === item) {
-            sumUah += moneyAmount[currancy.ccy] * currancy.sale;
+            sumUah += moneyAmount[currancy.ccy] * Number(currancy.sale);
           }
           if (currancy.ccy === currencyType) {
-            rate = currancy.sale;
+            rate = Number(currancy.sale);
           }
       }
     }
@@ -527,8 +539,10 @@ class Bank {
 
   countCommonCreditMoney(currencyType: string): number {
     let commonCreditMoney: IMoneyObject<number> = {};
-    for (let client of this.clients) {
-      for (let account of client.creditAccounts) {
+    let client: Client;
+    for (client of this.clients) {
+      let account: ICreditAccount;
+      for (account of client.creditAccounts) {
         if (account) {
           if (!commonCreditMoney[account.currencyType]) {
             commonCreditMoney[account.currencyType] = 0;
@@ -538,15 +552,17 @@ class Bank {
         }
       }
     }
-    let sumUah = 0;
-    let rate;
-    for (let currancy of JSON.parse(localStorage.currancyCourse)) {
-      for (let item in commonCreditMoney) {
+    let sumUah: number = 0;
+    let rate: number = 0;
+    let currancy: Currancy;
+    for (currancy of JSON.parse(localStorage.currancyCourse)) {
+      let item: string;
+      for (item in commonCreditMoney) {
         if (currancy.ccy === item) {
-          sumUah += commonCreditMoney[currancy.ccy] * currancy.sale;
+          sumUah += commonCreditMoney[currancy.ccy] * Number(currancy.sale);
         }
         if (currancy.ccy === currencyType) {
-          rate = currancy.sale;
+          rate = Number(currancy.sale);
         }
       }
     }
@@ -555,8 +571,10 @@ class Bank {
 
   countCreditMoney(currencyType: string, isActive: boolean): number {
     let creditMoney: IMoneyObject<number> = {};
-    for (let client of this.clients) {
-      for (let account of client.creditAccounts) {
+    let client: Client;
+    for (client of this.clients) {
+      let account: ICreditAccount;
+      for (account of client.creditAccounts) {
         if (account) {
           if (!creditMoney[account.currencyType!]) {
             creditMoney[account.currencyType!] = 0;
@@ -568,15 +586,17 @@ class Bank {
         }
       }
     }
-    let sumUah = 0;
-    let rate;
-    for (let currancy of JSON.parse(localStorage.currancyCourse)) {
-      for (let item in creditMoney) {
+    let sumUah: number = 0;
+    let rate: number = 0;
+    let currancy: Currancy;
+    for (currancy of JSON.parse(localStorage.currancyCourse)) {
+      let item: string;
+      for (item in creditMoney) {
         if (currancy.ccy === item) {
-          sumUah += creditMoney[currancy.ccy] * currancy.sale;
+          sumUah += creditMoney[currancy.ccy] * Number(currancy.sale);
         }
         if (currancy.ccy === currencyType) {
-          rate = currancy.sale;
+          rate = Number(currancy.sale);
         }
       }
     }
@@ -584,16 +604,16 @@ class Bank {
   }
 
   createCalculationForm(): HTMLFormElement {
-    let form = document.createElement('form');
-    let operationSelect = this.createSelect('calculations',
+    let form: HTMLFormElement = document.createElement('form');
+    let operationSelect: HTMLSelectElement = this.createSelect('calculations',
       ['Выберите тип расчета', 'Общее количество денег внутри банка', 'Общие кредитные средства', 'Кредитные средства'],
       ['calculationType', 'countMoneyAmount', 'countCommonCreditMoney', 'countCreditMoney']);
-    let currencyTypeSelect = this.createSelect("currencyType", ['Выберите валюту', 'UAH', 'USD', 'EUR'],
+    let currencyTypeSelect: HTMLSelectElement = this.createSelect("currencyType", ['Выберите валюту', 'UAH', 'USD', 'EUR'],
       ['currency', 'UAH', 'USD', 'EUR']);
-    let isActiveClientSelect = this.createSelect("isActiveClient",
+    let isActiveClientSelect: HTMLSelectElement = this.createSelect("isActiveClient",
       ['clients', 'active', 'passive'], ['clients', true, false]);
-    let buttonCalculate = this.createButton('button', 'btn', 'Рассчитать');
-    let output = this.createTitle('p', '0.00', 'calculation-output')
+    let buttonCalculate: HTMLButtonElement = this.createButton('button', 'btn', 'Рассчитать');
+    let output: HTMLElement = this.createTitle('p', '0.00', 'calculation-output')
     buttonCalculate.addEventListener('click', this.onCalculate.bind(this));
     form.append(operationSelect, currencyTypeSelect, isActiveClientSelect, buttonCalculate, output);
     return form;
@@ -603,9 +623,9 @@ class Bank {
     event.preventDefault();
     let operation: 'countCreditMoney' | 'countCommonCreditMoney' | 'countMoneyAmount' = 
       (event.target as HTMLFormElement).closest("form")!.calculations.value;
-    let currencyType = (event.target as HTMLFormElement).closest("form")!.currencyType.value;
-    let isActiveClient = (event.target as HTMLFormElement).closest("form")!.isActiveClient.value;
-    let output = (event.target as HTMLFormElement).closest("form")!.querySelector('p');
+    let currencyType: string = (event.target as HTMLFormElement).closest("form")!.currencyType.value;
+    let isActiveClient: boolean = (event.target as HTMLFormElement).closest("form")!.isActiveClient.value;
+    let output: HTMLParagraphElement | null = (event.target as HTMLFormElement).closest("form")!.querySelector('p');
     output!.innerHTML = String(this[operation](currencyType, isActiveClient));
   }
 }
@@ -647,15 +667,15 @@ class BankMenu {
 
   render(): void {
     this.root.innerHTML = "";
-    let ul = document.createElement("ul");
+    let ul: HTMLUListElement = document.createElement("ul");
 
-    let div = document.createElement("div");
+    let div: HTMLDivElement = document.createElement("div");
     this.container = new Bank(div);
     ul.addEventListener("click", this.onContainer.bind(this));
 
     ul.classList.add("menu");
-    for (let i = 0; i < this.navigations.length; i++) {
-      let li = document.createElement("li");
+    for (let i: number = 0; i < this.navigations.length; i++) {
+      let li: HTMLLIElement = document.createElement("li");
       li.setAttribute("data-action", this.navigations[i].action);
 
       if (this.navigations[i].isActive) {
@@ -668,7 +688,7 @@ class BankMenu {
       }
         ul.appendChild(li);
 
-        let span = document.createElement("SPAN");
+        let span: HTMLSpanElement = document.createElement("Span");
         span.innerHTML = this.navigations[i].title;
         li.appendChild(span);
     }
@@ -678,16 +698,16 @@ class BankMenu {
   }
 
   onContainer(event: MouseEvent): void {
-    let element = (event.target as HTMLElement).closest("li");
+    let element: HTMLLIElement | null = (event.target as HTMLElement).closest("li");
     if (element !== null && !element.classList.contains("active")) {
       event.preventDefault();
 
-      let liActive = (element.closest("ul") as HTMLElement).querySelector("li.active");
+      let liActive: HTMLLIElement | null = (element.closest("ul") as HTMLElement).querySelector("li.active");
       liActive!.classList.remove("active");
 
       element.classList.add("active");
 
-      let action = element.getAttribute("data-action");
+      let action: string | null = element.getAttribute("data-action");
       if (typeof this.container![action as "clientListAction" | 
         "createClientAction" | "editAction" | "countAction"] === "function") {
         this.container![action as "clientListAction" | "createClientAction" | 
@@ -698,5 +718,5 @@ class BankMenu {
 
 }
 
-let root = document.getElementById("root") as HTMLElement;
-let bank = new BankMenu(root);
+let root: HTMLDivElement = document.getElementById("root") as HTMLDivElement;
+let bank: BankMenu = new BankMenu(root);

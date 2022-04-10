@@ -89,20 +89,24 @@ class Bank {
     createClientList() {
         let table = document.createElement("table");
         table.className = 'table';
-        for (let client of this.clients) {
+        let client;
+        for (client of this.clients) {
             let tr = document.createElement("tr");
-            for (let item in client) {
+            let item;
+            for (item in client) {
                 let th = document.createElement("th");
                 th.innerHTML = item;
                 if (item === 'debitAccounts' || item === 'creditAccounts') {
                     let data = document.createElement("td");
-                    for (let property of client[item]) {
+                    let property;
+                    for (property of client[item]) {
                         let br = document.createElement("br");
-                        for (let [key, value] of Object.entries(property)) {
+                        let key, value;
+                        for ([key, value] of Object.entries(property)) {
                             let th = document.createElement("th");
                             let td = document.createElement("td");
                             th.innerHTML = key;
-                            td.innerHTML = value;
+                            td.innerHTML = value.toString();
                             data.append(th, td);
                         }
                         data.append(br);
@@ -263,7 +267,8 @@ class Bank {
         let table = document.createElement("table");
         table.className = 'table';
         let tr = document.createElement("tr");
-        for (let item in currentClient) {
+        let item;
+        for (item in currentClient) {
             if (item === 'creditAccounts' || item === 'debitAccounts') {
                 let th = document.createElement("th");
                 let td = document.createElement("td");
@@ -371,6 +376,10 @@ class Bank {
             activationDate: new Date().toLocaleDateString(),
             cardExpirationDate: new Date(new Date().
                 setFullYear(new Date().getFullYear() + 5)).toLocaleDateString(),
+            personalFunds: 0,
+            limit: 0,
+            isActive: true,
+            currencyType: 'UAH'
         };
         let data = new FormData(event.target.closest("form"));
         data.forEach((value, name) => {
@@ -387,7 +396,8 @@ class Bank {
         let moneyAmount = {};
         let client;
         for (client of this.clients) {
-            for (let account of client.debitAccounts) {
+            let account;
+            for (account of client.debitAccounts) {
                 if (account) {
                     if (!moneyAmount[account.currencyType]) {
                         moneyAmount[account.currencyType] = 0;
@@ -395,7 +405,7 @@ class Bank {
                     moneyAmount[account.currencyType] += +account.balance;
                 }
             }
-            for (let account of client.creditAccounts) {
+            for (account of client.creditAccounts) {
                 if (account) {
                     if (!moneyAmount[account.currencyType]) {
                         moneyAmount[account.currencyType] = 0;
@@ -405,14 +415,16 @@ class Bank {
             }
         }
         let sumUah = 0;
-        let rate;
-        for (let currancy of JSON.parse(localStorage.currancyCourse)) {
-            for (let item in moneyAmount) {
+        let rate = 0;
+        let currancy;
+        for (currancy of JSON.parse(localStorage.currancyCourse)) {
+            let item;
+            for (item in moneyAmount) {
                 if (currancy.ccy === item) {
-                    sumUah += moneyAmount[currancy.ccy] * currancy.sale;
+                    sumUah += moneyAmount[currancy.ccy] * Number(currancy.sale);
                 }
                 if (currancy.ccy === currencyType) {
-                    rate = currancy.sale;
+                    rate = Number(currancy.sale);
                 }
             }
         }
@@ -420,8 +432,10 @@ class Bank {
     }
     countCommonCreditMoney(currencyType) {
         let commonCreditMoney = {};
-        for (let client of this.clients) {
-            for (let account of client.creditAccounts) {
+        let client;
+        for (client of this.clients) {
+            let account;
+            for (account of client.creditAccounts) {
                 if (account) {
                     if (!commonCreditMoney[account.currencyType]) {
                         commonCreditMoney[account.currencyType] = 0;
@@ -432,14 +446,16 @@ class Bank {
             }
         }
         let sumUah = 0;
-        let rate;
-        for (let currancy of JSON.parse(localStorage.currancyCourse)) {
-            for (let item in commonCreditMoney) {
+        let rate = 0;
+        let currancy;
+        for (currancy of JSON.parse(localStorage.currancyCourse)) {
+            let item;
+            for (item in commonCreditMoney) {
                 if (currancy.ccy === item) {
-                    sumUah += commonCreditMoney[currancy.ccy] * currancy.sale;
+                    sumUah += commonCreditMoney[currancy.ccy] * Number(currancy.sale);
                 }
                 if (currancy.ccy === currencyType) {
-                    rate = currancy.sale;
+                    rate = Number(currancy.sale);
                 }
             }
         }
@@ -447,8 +463,10 @@ class Bank {
     }
     countCreditMoney(currencyType, isActive) {
         let creditMoney = {};
-        for (let client of this.clients) {
-            for (let account of client.creditAccounts) {
+        let client;
+        for (client of this.clients) {
+            let account;
+            for (account of client.creditAccounts) {
                 if (account) {
                     if (!creditMoney[account.currencyType]) {
                         creditMoney[account.currencyType] = 0;
@@ -461,14 +479,16 @@ class Bank {
             }
         }
         let sumUah = 0;
-        let rate;
-        for (let currancy of JSON.parse(localStorage.currancyCourse)) {
-            for (let item in creditMoney) {
+        let rate = 0;
+        let currancy;
+        for (currancy of JSON.parse(localStorage.currancyCourse)) {
+            let item;
+            for (item in creditMoney) {
                 if (currancy.ccy === item) {
-                    sumUah += creditMoney[currancy.ccy] * currancy.sale;
+                    sumUah += creditMoney[currancy.ccy] * Number(currancy.sale);
                 }
                 if (currancy.ccy === currencyType) {
-                    rate = currancy.sale;
+                    rate = Number(currancy.sale);
                 }
             }
         }
@@ -539,7 +559,7 @@ class BankMenu {
                 }
             }
             ul.appendChild(li);
-            let span = document.createElement("SPAN");
+            let span = document.createElement("Span");
             span.innerHTML = this.navigations[i].title;
             li.appendChild(span);
         }
