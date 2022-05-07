@@ -56,14 +56,8 @@ interface IMoneyObject<T> {
   [key: string | symbol]: T
 }
 
-interface Connection<T> {
+interface IConnection<T> {
   request(url: string): Promise<T>
-}
-
-class FetchService<P> implements Connection<P> {
-  request(url: string): Promise<P> {
-    return fetch(url).then((result) => result.json());
-  }
 }
 
 interface Currancy {
@@ -71,6 +65,12 @@ interface Currancy {
   base_ccy: string,
   buy: string,
   sale: string
+}
+
+class FetchService<P> implements IConnection<P> {
+  request(url: string): Promise<P> {
+    return fetch(url).then((result) => result.json());
+  }
 }
 
 class Bank {
